@@ -1,0 +1,7 @@
+torch
+torchvision
+opencv-python
+gym[atari]
+tensorboardX
+tensorboard==1.14.0
+google-cloud-storage

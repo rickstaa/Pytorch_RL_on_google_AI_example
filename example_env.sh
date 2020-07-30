@@ -1,0 +1,9 @@
+export REGION=europe-west1
+export CONTAINER_REGION=eu.gcr.io
+export PROJECT_ID=$(gcloud config list project --format "value(core.project)")
+export BUCKET_NAME=${PROJECT_ID}-${REGION}-pytorch_dql_pong
+export IMAGE_REPO_NAME=pytorch_dql_pong_gpu_container
+export IMAGE_TAG=dql_pytorch_gpu
+export IMAGE_URI=$CONTAINER_REGION/$PROJECT_ID/$IMAGE_REPO_NAME:$IMAGE_TAG
+export JOB_NAME=pytorch_dql_pong_job_$(date +%Y%m%d_%H%M%S)
+export OUTPUT_PATH=gs://$BUCKET_NAME/$JOB_NAME
