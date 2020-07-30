@@ -33,7 +33,7 @@ In order to train RL algorithms on the Google ai platform we need the following 
 
 For the training script, I used the `dqn_basic` script of [@colinskow's move37 class](https://github.com/colinskow/move37). Two small modifications were made to this script to use it with the Google AI platform. First, I added the `model_dir` argument to the script to allow us to specify the Google cloud bucket location where we want to store the model and the TensorFlow logs:
 
-```bash
+```python
 parser.add_argument(
     "--model-dir", default=".", help="The directory to store the model"
 )
@@ -41,13 +41,16 @@ parser.add_argument(
 
 Following, I used this argument to set the `log_dir` of the tensorboard `SummaryWriter` object:
 
-```bash
-writer = SummaryWriter(comment="-" + args.env, log_dir=args.model_dir)
+```python
+writer = SummaryWriter(
+    comment="-" + args.env,
+    log_dir=os.path.join(args.model_dir if args.model_dir else ".", model_dir_name),
+)
 ```
 
 Lastly, I used the `gsutil` module to write the trained model to the Google cloud bucket that is specified in the `model_dir` argument:
 
-```bash
+```python
 if args.model_dir:
     subprocess.check_call(
         [
@@ -56,9 +59,10 @@ if args.model_dir:
             tmp_model_file,
             os.path.join(args.model_dir, tmp_model_file),
         ]
+)
 ```
 
-Alternatively this can also be achieved with the `from Google.cloud import storage` module ([see the Google documentation for more information](https://cloud.Google.com/storage/docs/uploading-objects#storage-upload-object-code-sample). An example can be found in the script on line.
+Alternatively this can also be achieved with the `from Google.cloud import storage` module ([see the Google documentation for more information](https://cloud.Google.com/storage/docs/uploading-objects#storage-upload-object-code-sample)). To use this method comment out the code on [L180-L199](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L180-L199) and [L271-289](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L271-L289) of the [dqn_basic.py](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/master/dqn_basic.py) file.
 
 ### Docker file
 
@@ -111,7 +115,7 @@ docker build -f Dockerfile -t $IMAGE_URI ./
 If the container has successfully built, we can test it:
 
 ```bash
-docker run $IMAGE_URI --epochs 1
+docker run $IMAGE_URI
 ```
 
 ### Push the container to the container Registry

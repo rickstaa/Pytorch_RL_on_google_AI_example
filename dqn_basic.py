@@ -34,7 +34,7 @@ except ImportError:
 DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
 MEAN_REWARD_GOAL = 19.5
 MAX_FRAMES = 1e4
-MAX_FRAMES = 1.2e6
+# MAX_FRAMES = 1.2e6
 
 GAMMA = 0.99
 BATCH_SIZE = 32
