@@ -68,7 +68,7 @@ Lastly, I used the `gsutil` module to write the trained model to the Google clou
       )
 ```
 
-Alternatively this can also be achieved with the `from Google.cloud import storage` module ([see the Google documentation for more information](https://cloud.Google.com/storage/docs/uploading-objects#storage-upload-object-code-sample)). To use this method comment out the code on [L188-L207](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L188-L207) and [L293-L31](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L293-L311) of the [dqn_basic.py](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/master/dqn_basic.py) file.
+Alternatively this can also be achieved with the `from Google.cloud import storage` module ([see the Google documentation for more information](https://cloud.Google.com/storage/docs/uploading-objects#storage-upload-object-code-sample)). To use this method comment out the code on [L180-L199](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L180-L199) and [L271-L289](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L271-L289) of the [dqn_basic.py](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/master/dqn_basic.py) file.
 
 ### Docker file
 
@@ -153,6 +153,7 @@ The most important arguments are the following:
 - `--region`: The region from which you want to use the computing resources.
 - `--scale-tier`: This is the type of computing resource you use for performing the training job (see [ai-platform pricing page](https://cloud.Google.com/ai-platform/training/pricing) for more information).
 - `--master-image-uri`: The URI to your Docker image.
+- `--no-cuda`: Forces the CPU to be used even if GPU is available.
 - `--model-dir`: The URI to the google cloud bucket.
 
 ### Check the results
