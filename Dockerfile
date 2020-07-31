@@ -25,7 +25,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender-dev \
     libxext6 \
     apt-utils  \
-    python3 \
     python3-dev && \
     rm -rf /var/lib/apt/lists/*
 
@@ -62,6 +61,7 @@ RUN wget -nv \
 
 # Path configuration
 ENV PATH $PATH:/root/tools/google-cloud-sdk/bin
+
 # Make sure gsutil will use the default service account
 RUN echo '[GoogleCompute]\nservice_account = default' > /etc/boto.cfg
 
@@ -69,7 +69,6 @@ RUN echo '[GoogleCompute]\nservice_account = default' > /etc/boto.cfg
 COPY dqn_basic.py /root/dql_train/dqn_basic.py
 COPY lib /root/dql_train/lib
 
+# Add entrypoint
 WORKDIR /root/dql_train
-
-# Sets up the entry point to invoke the trainer.
 ENTRYPOINT ["python3", "dqn_basic.py"]

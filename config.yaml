@@ -2,11 +2,11 @@ trainingInput:
   hyperparameters:
     goal: MINIMIZE
     hyperparameterMetricTag: "my_loss"
-    maxTrials: 20
-    maxParallelTrials: 5
+    maxTrials: 3
+    maxParallelTrials: 3
     enableTrialEarlyStopping: True
     params:
-      - parameterName: batch_size
+      - parameterName: batch-size
         type: DISCRETE
         discreteValues:
           - 32

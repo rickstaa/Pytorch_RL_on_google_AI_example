@@ -2,7 +2,7 @@
 
 This repository contains a quick example on how to push a `PyTorch` based, deep q-learning
 (DQL) job to the Google ai platform while viewing the results using `tensorboard`. It was based on the
-[Google container documentation](https://cloud.Google.com/ai-platform/training/docs/using-containers) and uses the code of [the DQL Pong example of @colinskow's move37 class](https://github.com/colinskow/move37). This repository is not meant to be an in-depth review of either Reinforcement learning (RL), docker or
+[Google container documentation](https://cloud.google.com/ai-platform/training/docs/custom-containers-training) and uses the code of [the DQL Pong example of @colinskow's move37 class](https://github.com/colinskow/move37). This repository is not meant to be an in-depth review of either Reinforcement learning (RL), docker or
 Google cloud but mainly serves as a template for performing PyTorch based RL in the cloud. For more information on these topics, see the following resources:
 
 - Check out the videos of [@colinskow for an excellent overview of RL](https://www.youtube.com/watch?v=14BfO5lMiuk&list=PLWzQK00nc192L7UMJyTmLXaHa3KcO0wBT).
@@ -51,18 +51,24 @@ writer = SummaryWriter(
 Lastly, I used the `gsutil` module to write the trained model to the Google cloud bucket that is specified in the `model_dir` argument:
 
 ```python
-if args.model_dir:
-    subprocess.check_call(
-        [
-            "gsutil",
-            "cp",
-            tmp_model_file,
-            os.path.join(args.model_dir, tmp_model_file),
-        ]
-)
+  retval = subprocess.check_call(
+      [
+          "gsutil",
+          "cp",
+          tmp_model_file,
+          os.path.join(args.model_dir, tmp_model_file),
+      ],
+      stdin=sys.stdout,
+      stderr=sys.stdout,
+  )
+  if retval > 0:
+      raise Exception(
+          "Could not save model as. Supplied Google cloud "
+          "bucket does not exists! Shutting down training."
+      )
 ```
 
-Alternatively this can also be achieved with the `from Google.cloud import storage` module ([see the Google documentation for more information](https://cloud.Google.com/storage/docs/uploading-objects#storage-upload-object-code-sample)). To use this method comment out the code on [L180-L199](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L180-L199) and [L271-289](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L271-L289) of the [dqn_basic.py](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/master/dqn_basic.py) file.
+Alternatively this can also be achieved with the `from Google.cloud import storage` module ([see the Google documentation for more information](https://cloud.Google.com/storage/docs/uploading-objects#storage-upload-object-code-sample)). To use this method comment out the code on [L188-L207](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L188-L207) and [L293-L31](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/8af3960064e1b67cfcc3efbdcbd020b3bb4c6153/dqn_basic.py#L293-L311) of the [dqn_basic.py](https://github.com/rickstaa/Pytorch_RL_on_google_AI_example/blob/master/dqn_basic.py) file.
 
 ### Docker file
 
@@ -138,6 +144,7 @@ gcloud ai-platform jobs submit training $JOB_NAME \
  --scale-tier BASIC \
  --master-image-uri $IMAGE_URI \
  -- \
+ --no-cuda \
  --model-dir $OUTPUT_PATH \
 ```
 
@@ -157,13 +164,14 @@ After the training job has been deployed you can check visualize the results dir
 To use GPU during training, you have to change the job submit command. In the job submit command change the `--scale-tier` option from `BASIC` to `BASIC_GPU` and add the `--cuda` command:
 
 ```bash
+export JOB_NAME=pytorch_dql_pong_job_$(date +%Y%m%d_%H%M%S)
+export OUTPUT_PATH=gs://$BUCKET_NAME/$JOB_NAME
 gcloud ai-platform jobs submit training $JOB_NAME \
  --region $REGION \
  --scale-tier BASIC_GPU \
  --master-image-uri $IMAGE_URI \
  -- \
- --cuda \
- --model-dir $OUTPUT_PATH \
+ --model-dir $OUTPUT_PATH
 ```
 
 ⚠️💰 Please keep in mind that changing the scale-tier from `BASIC` to `BASIC_GPU` increases the training cost! For an overview of the cost of training in the cloud see [the Google ai documentation](https://cloud.Google.com/ai-platform/training/pricing).
@@ -173,14 +181,16 @@ gcloud ai-platform jobs submit training $JOB_NAME \
 Additionally, as explained in the [google documentation](https://cloud.google.com/ai-platform/training/docs/using-containers), you can also perform hyperparameter tuning in the cloud. In this example, I try to tune the `batch_size` hyperparameter. You can push a hyperparameter training job to the Google Ai cloud by supplying the job submit command with the hyperparameter `config.yaml` file:
 
 ```bash
+export JOB_NAME=pytorch_dql_pong_job_$(date +%Y%m%d_%H%M%S)
+export OUTPUT_PATH=gs://$BUCKET_NAME/$JOB_NAME
 gcloud ai-platform jobs submit training $JOB_NAME \
   --region $REGION \
   --scale-tier BASIC \
   --master-image-uri $IMAGE_URI \
   --config config.yaml \
   -- \
-  --cuda \
-  --model-dir $OUTPUT_PATH \
+  --no-cuda \
+  --model-dir $OUTPUT_PATH
 ```
 
 ### Clean up

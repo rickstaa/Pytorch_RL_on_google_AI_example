@@ -10,6 +10,7 @@ from lib import wrappers
 from lib import dqn_model
 from lib.utils import mkdir
 import os
+import sys
 import re
 import subprocess
 
@@ -22,6 +23,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+import hypertune
 from google.cloud import storage
 from google.api_core.exceptions import NotFound
 
@@ -33,8 +35,8 @@ except ImportError:
 # Script settings
 DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
 MEAN_REWARD_GOAL = 19.5
-MAX_FRAMES = 1e4
-# MAX_FRAMES = 1.2e6
+# MAX_FRAMES = 1e4
+MAX_FRAMES = 1.2e6
 
 GAMMA = 0.99
 BATCH_SIZE = 32
@@ -141,7 +143,7 @@ if __name__ == "__main__":
     # Parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--cuda", default=False, action="store_true", help="Enable cuda"
+        "--no-cuda", action="store_true", default=False, help="disables CUDA training"
     )
     parser.add_argument(
         "--env",
@@ -167,7 +169,16 @@ if __name__ == "__main__":
         "--batch-size", default=BATCH_SIZE, help="The directory to store the model"
     )
     args = parser.parse_args()
-    device = torch.device("cuda" if args.cuda else "cpu")
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda" if (not args.no_cuda and use_cuda) else "cpu")
+    print(
+        "Training RL algorithm on the {}.".format(
+            "GPU" if device.type == "cuda" else device
+        )
+    )
+
+    # Convert hyperparameter to right format (Google gives strings)
+    args.batch_size = int(args.batch_size)
 
     # Create Pong environment
     env = wrappers.make_env(args.env)
@@ -198,7 +209,7 @@ if __name__ == "__main__":
     #     storage_client = storage.Client()
     #     bucket = storage_client.bucket(bucket_name)
 
-    # Create DQN main and target Networks
+    # Create DQN policy and target Networks
     net = dqn_model.DQN(env.observation_space.shape, env.action_space.n).to(device)
     tgt_net = dqn_model.DQN(env.observation_space.shape, env.action_space.n).to(device)
 
@@ -221,6 +232,13 @@ if __name__ == "__main__":
     ts_frame = 0
     ts = time.time()
     best_mean_reward = None
+    loss_t = torch.tensor(0.0).to(device)
+
+    # Uses hypertune to report metrics for hyperparameter tuning.
+    hpt = hypertune.HyperTune()
+    hpt.report_hyperparameter_tuning_metric(
+        hyperparameter_metric_tag="my_loss", metric_value=loss_t, global_step=frame_idx
+    )
 
     # Training loop
     while True:
@@ -259,14 +277,21 @@ if __name__ == "__main__":
                 if args.model_dir:
 
                     # Method1: Store model using gsutil
-                    subprocess.check_call(
+                    retval = subprocess.check_call(
                         [
                             "gsutil",
                             "cp",
                             tmp_model_file,
                             os.path.join(args.model_dir, tmp_model_file),
-                        ]
+                        ],
+                        stdin=sys.stdout,
+                        stderr=sys.stdout,
                     )
+                    if retval > 0:
+                        raise Exception(
+                            "Could not save model as. Supplied Google cloud "
+                            "bucket does not exists! Shutting down training."
+                        )
 
                     # # Method2: Store model using google.cloud.storage module
                     # # NOTE: Service account key required https://cloud.google.com/docs/authentication/production#command-line
@@ -289,7 +314,7 @@ if __name__ == "__main__":
                     #         )
 
             # Break loop if reward is high enough or max frames has been reached
-            if mean_reward > args.reward or frame_idx <= args.frames:
+            if mean_reward > args.reward or frame_idx >= args.frames:
                 print("Solved in %d frames!" % frame_idx)
                 break
 
