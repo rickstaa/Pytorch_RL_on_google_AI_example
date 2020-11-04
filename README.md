@@ -1,4 +1,4 @@
-# Pytorch_RL_on_Google_AI_example
+# Pytorch RL on Google AI example
 
 This repository contains a quick example on how to push a `PyTorch` based, deep q-learning
 (DQL) job to the Google ai platform while viewing the results using `tensorboard`. It was based on the
